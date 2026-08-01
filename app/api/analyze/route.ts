@@ -39,22 +39,33 @@ export async function POST(request: Request) {
 
 Compare the candidate CV with the job description.
 
-Return exactly this format:
+Return ONLY valid JSON.
 
-🎯 Match Score
-Give a percentage.
+Do not use markdown.
+Do not add explanations.
 
-✅ Matching Skills
-- ...
+Use exactly this structure:
 
-❌ Missing Skills
-- ...
+{
+  "score": 0,
+  "matchingSkills": [
+    "skill"
+  ],
+  "missingSkills": [
+    "skill"
+  ],
+  "suggestions": [
+    "suggestion"
+  ],
+  "resumeChanges": [
+    "change"
+  ]
+}
 
-💡 Improvement Suggestions
-- ...
-
-📄 Resume Changes
-- ...
+Rules:
+- score must be a number between 0 and 100.
+- Keep skills short.
+- Give practical resume advice.
 `,
         },
         {
@@ -73,8 +84,12 @@ ${cvText}
       ],
     });
 
+    const aiResponse = completion.choices[0].message.content;
+
+    const result = JSON.parse(aiResponse || "{}");
+
     return NextResponse.json({
-      result: completion.choices[0].message.content,
+      result,
     });
   } catch (error) {
     console.error(error);
