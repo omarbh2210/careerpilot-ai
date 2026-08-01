@@ -4,34 +4,37 @@ import { useState } from "react";
 
 export default function Home() {
   const [jobDescription, setJobDescription] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function analyzeJob() {
-    if (!jobDescription.trim()) return;
-
-    setLoading(true);
-    setResult("");
-
-    try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          jobDescription,
-        }),
-      });
-
-      const data = await response.json();
-      setResult(data.result);
-    } catch {
-      setResult("Something went wrong.");
-    }
-
-    setLoading(false);
+  if (!selectedFile || !jobDescription.trim()) {
+    alert("Please upload a PDF and paste a job description.");
+    return;
   }
+
+  setLoading(true);
+  setResult("");
+
+  const formData = new FormData();
+  formData.append("cv", selectedFile);
+  formData.append("jobDescription", jobDescription);
+
+  try {
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
+    setResult(data.result);
+  } catch {
+    setResult("Something went wrong.");
+  }
+
+  setLoading(false);
+}
 
   return (
     <main className="min-h-screen bg-gray-100 flex items-center justify-center p-8">
@@ -41,8 +44,33 @@ export default function Home() {
         </h1>
 
         <p className="text-gray-600 mb-6">
-          Paste a job description and let AI analyze it.
+          Upload your CV and paste the job description.
         </p>
+
+        <label className="block mb-2 font-semibold">
+          Upload your CV (PDF)
+        </label>
+
+        <input
+          type="file"
+          accept=".pdf"
+          onChange={(e) => {
+            if (e.target.files && e.target.files.length > 0) {
+              setSelectedFile(e.target.files[0]);
+            }
+          }}
+          className="mb-4"
+        />
+
+        {selectedFile && (
+          <p className="mb-6 text-green-600">
+            📄 Selected: {selectedFile.name}
+          </p>
+        )}
+
+        <label className="block mb-2 font-semibold">
+          Job Description
+        </label>
 
         <textarea
           className="w-full border rounded-xl p-4 h-56"
